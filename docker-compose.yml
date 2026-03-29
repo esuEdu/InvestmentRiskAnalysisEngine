@@ -1,0 +1,10 @@
+services:
+  postgres:
+    container_name: risk_engine_db
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=risk_engine
+    ports:
+      - "5432:5432"
