@@ -1,6 +1,6 @@
 services:
   postgres:
-    container_name: risk_engine_db
+    container_name: investment_risk_analysis_db
     image: postgres:16
     environment:
       - POSTGRES_USER=postgres
