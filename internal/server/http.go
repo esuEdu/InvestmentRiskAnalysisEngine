@@ -1,8 +1,7 @@
 package server
 
 import (
-	"log"
-
+	"github.com/esuEdu/investment-risk-engine/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,8 +10,14 @@ type Server struct {
 }
 
 func New() *Server {
+	router := gin.New()
+
+	router.Use(ZapLogger())
+
+	router.Use(gin.Recovery())
+
 	s := &Server{
-		router: gin.Default(),
+		router: router,
 	}
 
 	s.setupRouter()
@@ -22,6 +27,6 @@ func New() *Server {
 
 func (s *Server) Start(addr string) {
 	if err := s.router.Run(addr); err != nil {
-		log.Fatal(err)
+		logger.Log.Fatalw("Server failed to start", "addr", addr, "error", err)
 	}
 }
