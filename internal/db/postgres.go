@@ -3,8 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
+	"github.com/esuEdu/investment-risk-engine/pkg/logger"
 	_ "github.com/lib/pq"
 )
 
@@ -29,7 +29,7 @@ func NewPostgres(
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
 
-	log.Println("PostgreSQL connected")
+	logger.Log.Infow("PostgreSQL connected", "host", host, "db", dbname)
 
 	return db, nil
 }

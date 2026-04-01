@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/esuEdu/investment-risk-engine/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,9 +30,21 @@ func Created(c *gin.Context, message string, data interface{}) {
 }
 
 func BadRequest(c *gin.Context, message string, err interface{}) {
+
+	logger.Log.Warnw("Bad Request",
+		"path", c.Request.URL.Path,
+		"error", err,
+	)
+
 	JSON(c, http.StatusBadRequest, message, nil, err)
 }
 
 func InternalError(c *gin.Context, message string, err interface{}) {
+
+	logger.Log.Errorw("Internal Server Error",
+		"path", c.Request.URL.Path,
+		"error", err,
+	)
+
 	JSON(c, http.StatusInternalServerError, message, nil, err)
 }
