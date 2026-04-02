@@ -13,11 +13,11 @@ migration:
 
 # Run migrations up
 migrate-up:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" up
+	migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" up
 
 # Rollback one migration
 migrate-down:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URL)" down 1
+	migrate -path $(MIGRATIONS_DIR) -database "$(DATABASE_URL)" down 1
 
 # Generate SQLC code
 generate:
