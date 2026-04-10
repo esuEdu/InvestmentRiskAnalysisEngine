@@ -7,6 +7,11 @@ func (s *Server) setupRouter() {
 	api := s.router.Group("/api")
 	{
 		api.GET("/health", s.healthCheck)
+		// Analysis Routes
+		analysis := api.Group("/analyses")
+		{
+			analysis.POST("", s.analysisHandler.Create)
+		}
 	}
 }
 

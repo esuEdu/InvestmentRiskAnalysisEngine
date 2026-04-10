@@ -1,23 +1,25 @@
 package server
 
 import (
+	analyses "github.com/esuEdu/investment-risk-engine/internal/analysis/delivery/http"
 	"github.com/esuEdu/investment-risk-engine/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
-	router *gin.Engine
+	router          *gin.Engine
+	analysisHandler *analyses.AnalysisHandler
 }
 
-func New() *Server {
+func New(analysisHandler *analyses.AnalysisHandler) *Server {
 	router := gin.New()
 
 	router.Use(ZapLogger())
-
 	router.Use(gin.Recovery())
 
 	s := &Server{
-		router: router,
+		router:          router,
+		analysisHandler: analysisHandler,
 	}
 
 	s.setupRouter()
