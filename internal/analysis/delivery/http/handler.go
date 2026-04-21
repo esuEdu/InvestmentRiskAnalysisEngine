@@ -1,11 +1,11 @@
 package http
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/esuEdu/investment-risk-engine/internal/analysis/domain"
 	"github.com/esuEdu/investment-risk-engine/internal/analysis/usecase"
+	"github.com/esuEdu/investment-risk-engine/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -19,6 +19,7 @@ func New(u *usecase.UseCase) *AnalysisHandler {
 }
 
 // ── POST /api/v1/analyses ─────────────────────────────────────────────────────
+
 type CreateRequest struct {
 	PortfolioID string  `json:"portfolio_id" binding:"required,uuid"`
 	Benchmark   *string `json:"benchmark"`
@@ -28,7 +29,7 @@ type CreateRequest struct {
 func (h *AnalysisHandler) Create(c *gin.Context) {
 	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 
@@ -36,12 +37,12 @@ func (h *AnalysisHandler) Create(c *gin.Context) {
 
 	result, err := h.useCase.ExecuteCreate(c.Request.Context(), pID, req.Benchmark, req.Period)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to queue analysis"})
+		response.InternalError(c, "failed to queue analysis")
 		return
 	}
 
 	// 202 Accepted signals the job is queued, not yet completed.
-	c.JSON(http.StatusAccepted, result)
+	response.Accepted(c, "analysis queued successfully", result)
 }
 
 // ── GET /api/v1/analyses/:id ──────────────────────────────────────────────────
@@ -49,17 +50,17 @@ func (h *AnalysisHandler) Create(c *gin.Context) {
 func (h *AnalysisHandler) Get(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid analysis id"})
+		response.BadRequest(c, "invalid analysis id")
 		return
 	}
 
 	result, err := h.useCase.ExecuteGet(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "analysis not found"})
+		response.NotFound(c, "analysis not found")
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	response.OK(c, "analysis retrieved", result)
 }
 
 // ── GET /api/v1/analyses ──────────────────────────────────────────────────────
@@ -67,13 +68,13 @@ func (h *AnalysisHandler) Get(c *gin.Context) {
 func (h *AnalysisHandler) List(c *gin.Context) {
 	limit, err := strconv.Atoi(c.DefaultQuery("limit", "20"))
 	if err != nil || limit <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be a positive integer"})
+		response.BadRequest(c, "limit must be a positive integer")
 		return
 	}
 
 	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
 	if err != nil || offset < 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "offset must be a non-negative integer"})
+		response.BadRequest(c, "offset must be a non-negative integer")
 		return
 	}
 
@@ -85,16 +86,19 @@ func (h *AnalysisHandler) List(c *gin.Context) {
 
 	results, err := h.useCase.ExecuteList(c.Request.Context(), int32(limit), int32(offset), statusFilter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to list analyses"})
+		response.InternalError(c, "failed to list analyses")
 		return
 	}
 
-	if len(results) == 0 {
-		c.JSON(http.StatusOK, []domain.AnalysisRequest{})
-		return
+	if results == nil {
+		results = []domain.AnalysisRequest{}
 	}
 
-	c.JSON(http.StatusOK, results)
+	response.OKList(c, "analyses listed", results, response.Meta{
+		Limit:  limit,
+		Offset: offset,
+		Count:  len(results),
+	})
 }
 
 // ── PUT /api/v1/analyses/:id ──────────────────────────────────────────────────
@@ -106,20 +110,20 @@ type UpdateRequest struct {
 func (h *AnalysisHandler) Update(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid analysis id"})
+		response.BadRequest(c, "invalid analysis id")
 		return
 	}
 
 	var req UpdateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 
 	if err := h.useCase.ExecuteUpdate(c.Request.Context(), id, req.Status); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update analysis"})
+		response.InternalError(c, "failed to update analysis")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"id": id, "status": req.Status})
+	response.OK(c, "analysis updated", gin.H{"id": id, "status": req.Status})
 }

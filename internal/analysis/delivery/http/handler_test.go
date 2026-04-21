@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	handler "github.com/esuEdu/investment-risk-engine/internal/analysis/delivery/http"
@@ -86,6 +87,14 @@ func TestCreate_ValidRequest(t *testing.T) {
 	if w.Code != http.StatusAccepted {
 		t.Errorf("want 202 Accepted, got %d\nbody: %s", w.Code, w.Body.String())
 	}
+	var body map[string]any
+	json.Unmarshal(w.Body.Bytes(), &body)
+	if body["message"] == nil {
+		t.Errorf("want 'message' field in response, got: %s", w.Body.String())
+	}
+	if body["data"] == nil {
+		t.Errorf("want 'data' field in response, got: %s", w.Body.String())
+	}
 }
 
 func TestCreate_MissingPeriod(t *testing.T) {
@@ -133,6 +142,9 @@ func TestCreate_RepoError(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Errorf("want 500 Internal Server Error, got %d\nbody: %s", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), `"error"`) {
+		t.Errorf("want 'error' field in response, got: %s", w.Body.String())
 	}
 }
 
@@ -187,6 +199,14 @@ func TestGet_ValidID(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
 	}
+	var body map[string]any
+	json.Unmarshal(w.Body.Bytes(), &body)
+	if body["message"] == nil {
+		t.Errorf("want 'message' field in response, got: %s", w.Body.String())
+	}
+	if body["data"] == nil {
+		t.Errorf("want 'data' field in response, got: %s", w.Body.String())
+	}
 }
 
 func TestGet_InvalidID(t *testing.T) {
@@ -236,6 +256,17 @@ func TestList_Defaults(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
+	}
+	var body map[string]any
+	json.Unmarshal(w.Body.Bytes(), &body)
+	if body["data"] == nil {
+		t.Errorf("want 'data' field, got: %s", w.Body.String())
+	}
+	if body["meta"] == nil {
+		t.Errorf("want 'meta' field, got: %s", w.Body.String())
+	}
+	if body["message"] == nil {
+		t.Errorf("want 'message' field, got: %s", w.Body.String())
 	}
 }
 
@@ -288,8 +319,16 @@ func TestList_Empty(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("want 200 OK, got %d", w.Code)
 	}
-	if w.Body.String() != "[]" {
-		t.Errorf("want empty array [], got %s", w.Body.String())
+	var body map[string]any
+	json.Unmarshal(w.Body.Bytes(), &body)
+	// data must be an empty array [], not null
+	data, ok := body["data"].([]any)
+	if !ok || len(data) != 0 {
+		t.Errorf("want data=[], got: %s", w.Body.String())
+	}
+	// meta must be present even when the list is empty
+	if body["meta"] == nil {
+		t.Errorf("want 'meta' field in list response, got: %s", w.Body.String())
 	}
 }
 
@@ -307,8 +346,8 @@ func TestList_RepoError(t *testing.T) {
 	if w.Code != http.StatusInternalServerError {
 		t.Errorf("want 500 Internal Server Error, got %d", w.Code)
 	}
-	if w.Body.String() == "" {
-		t.Error("want error message in body, got empty body")
+	if !strings.Contains(w.Body.String(), `"error"`) {
+		t.Errorf("want 'error' field in response, got: %s", w.Body.String())
 	}
 }
 
