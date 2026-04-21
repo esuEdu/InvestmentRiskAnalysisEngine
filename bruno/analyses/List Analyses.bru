@@ -1,0 +1,28 @@
+meta {
+  name: List Analyses
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/analyses?limit=20&offset=0
+  body: none
+  auth: none
+}
+
+params:query {
+  limit: 20
+  offset: 0
+  ~status: pending
+}
+
+docs {
+  Returns a paginated list of analysis requests.
+
+  Query params:
+  - limit  (default 20) — number of results per page
+  - offset (default 0)  — number of results to skip
+  - status (optional)   — filter by status: pending | processing | completed | failed
+
+  The "status" param is disabled by default (~ prefix). Remove ~ to activate it.
+}

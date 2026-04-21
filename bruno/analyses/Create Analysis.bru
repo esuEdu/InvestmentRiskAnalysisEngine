@@ -1,0 +1,31 @@
+meta {
+  name: Create Analysis
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/analyses
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "portfolio_id": "{{portfolioId}}",
+    "benchmark": "SPY",
+    "period": "1y"
+  }
+}
+
+docs {
+  Creates a new analysis request and queues it for async processing.
+
+  Returns 202 Accepted — the job is queued, not yet completed.
+  Poll GET /analyses/:id to check when status changes to "completed".
+
+  Fields:
+  - portfolio_id (required) — UUID of the portfolio to analyse
+  - benchmark    (optional) — ticker to compare against, e.g. "SPY"
+  - period       (required) — time window: "1y", "6m", "3m"
+}
