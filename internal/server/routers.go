@@ -11,9 +11,9 @@ func (s *Server) setupRouter() {
 		analysis := api.Group("/analyses")
 		{
 			analysis.POST("", s.analysisHandler.Create)
-			analysis.GET("", s.analysisHandler.Get)
 			analysis.GET("", s.analysisHandler.List)
-			analysis.PUT("", s.analysisHandler.Update)
+			analysis.GET("/:id", s.analysisHandler.Get)
+			analysis.PUT("/:id", s.analysisHandler.Update)
 		}
 	}
 }

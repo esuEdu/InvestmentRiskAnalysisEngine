@@ -54,6 +54,9 @@ func newTestRouter(repo domain.Repository) *gin.Engine {
 	uc := usecase.New(repo)
 	h := handler.New(uc)
 	r.POST("/api/v1/analyses", h.Create)
+	r.GET("/api/v1/analyses", h.List)
+	r.GET("/api/v1/analyses/:id", h.Get)
+	r.PUT("/api/v1/analyses/:id", h.Update)
 	return r
 }
 
@@ -165,5 +168,192 @@ func TestCreate_EmptyBody(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("want 400 Bad Request, got %d", w.Code)
+	}
+}
+
+func TestGet_ValidID(t *testing.T) {
+	wantID := uuid.New()
+
+	repo := &mockRepo{
+		getFn: func(_ context.Context, id uuid.UUID) (domain.AnalysisRequest, error) {
+			return domain.AnalysisRequest{ID: id, Status: domain.StatusPending, Period: "1y"}, nil
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses/"+wantID.String(), nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestGet_InvalidID(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses/not-a-uuid", nil)
+	newTestRouter(&mockRepo{}).ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("want 400 Bad Request, got %d", w.Code)
+	}
+}
+
+func TestGet_NotFound(t *testing.T) {
+	repo := &mockRepo{
+		getFn: func(_ context.Context, _ uuid.UUID) (domain.AnalysisRequest, error) {
+			return domain.AnalysisRequest{}, errors.New("no rows in result set")
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses/"+uuid.New().String(), nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("want 404 Not Found, got %d", w.Code)
+	}
+}
+
+func TestList_Defaults(t *testing.T) {
+	repo := &mockRepo{
+		listFn: func(_ context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error) {
+			if limit != 20 || offset != 0 {
+				t.Errorf("want default limit=20 offset=0, got limit=%d offset=%d", limit, offset)
+			}
+			if status != nil {
+				t.Errorf("want nil status filter, got %v", *status)
+			}
+			return []domain.AnalysisRequest{
+				{ID: uuid.New(), Status: domain.StatusPending, Period: "1y"},
+			}, nil
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses", nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestList_WithQueryParams(t *testing.T) {
+	repo := &mockRepo{
+		listFn: func(_ context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error) {
+			if limit != 5 {
+				t.Errorf("want limit=5, got %d", limit)
+			}
+			if offset != 10 {
+				t.Errorf("want offset=10, got %d", offset)
+			}
+			if status == nil || *status != "completed" {
+				t.Errorf("want status=completed, got %v", status)
+			}
+			return []domain.AnalysisRequest{}, nil
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses?limit=5&offset=10&status=completed", nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("want 200 OK, got %d", w.Code)
+	}
+}
+
+func TestList_InvalidLimit(t *testing.T) {
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses?limit=abc", nil)
+	newTestRouter(&mockRepo{}).ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("want 400 Bad Request, got %d", w.Code)
+	}
+}
+
+func TestList_RepoError(t *testing.T) {
+	repo := &mockRepo{
+		listFn: func(_ context.Context, _ int32, _ int32, _ *string) ([]domain.AnalysisRequest, error) {
+			return nil, errors.New("query timeout")
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses", nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("want 500 Internal Server Error, got %d", w.Code)
+	}
+}
+
+func TestUpdate_ValidRequest(t *testing.T) {
+	wantID := uuid.New()
+
+	repo := &mockRepo{
+		updateStatusFn: func(_ context.Context, id uuid.UUID, status domain.Status) error {
+			if id != wantID {
+				t.Errorf("wrong id: want %v, got %v", wantID, id)
+			}
+			if status != domain.StatusCompleted {
+				t.Errorf("wrong status: want %q, got %q", domain.StatusCompleted, status)
+			}
+			return nil
+		},
+	}
+
+	body, _ := json.Marshal(map[string]string{"status": "completed"})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPut, "/api/v1/analyses/"+wantID.String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestUpdate_MissingStatus(t *testing.T) {
+	body, _ := json.Marshal(map[string]string{})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPut, "/api/v1/analyses/"+uuid.New().String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	newTestRouter(&mockRepo{}).ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("want 400 Bad Request, got %d", w.Code)
+	}
+}
+
+func TestUpdate_InvalidID(t *testing.T) {
+	body, _ := json.Marshal(map[string]string{"status": "completed"})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPut, "/api/v1/analyses/bad-id", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	newTestRouter(&mockRepo{}).ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("want 400 Bad Request, got %d", w.Code)
+	}
+}
+
+func TestUpdate_RepoError(t *testing.T) {
+	repo := &mockRepo{
+		updateStatusFn: func(_ context.Context, _ uuid.UUID, _ domain.Status) error {
+			return errors.New("update failed")
+		},
+	}
+
+	body, _ := json.Marshal(map[string]string{"status": "failed"})
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodPut, "/api/v1/analyses/"+uuid.New().String(), bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Errorf("want 500 Internal Server Error, got %d", w.Code)
 	}
 }
