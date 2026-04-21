@@ -89,6 +89,11 @@ func (h *AnalysisHandler) List(c *gin.Context) {
 		return
 	}
 
+	if len(results) == 0 {
+		c.JSON(http.StatusOK, []domain.AnalysisRequest{})
+		return
+	}
+
 	c.JSON(http.StatusOK, results)
 }
 

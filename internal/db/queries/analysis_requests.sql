@@ -48,6 +48,6 @@ SELECT
     created_at,
     updated_at
 FROM analysis_requests
-WHERE ($3::text IS NULL OR status = $3)
+WHERE ($3::text = '' OR status = $3)
 ORDER BY created_at DESC
 LIMIT $1 OFFSET $2;

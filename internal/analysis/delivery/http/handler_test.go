@@ -274,6 +274,25 @@ func TestList_InvalidLimit(t *testing.T) {
 	}
 }
 
+func TestList_Empty(t *testing.T) {
+	repo := &mockRepo{
+		listFn: func(_ context.Context, _ int32, _ int32, _ *string) ([]domain.AnalysisRequest, error) {
+			return []domain.AnalysisRequest{}, nil
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses", nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("want 200 OK, got %d", w.Code)
+	}
+	if w.Body.String() != "[]" {
+		t.Errorf("want empty array [], got %s", w.Body.String())
+	}
+}
+
 func TestList_RepoError(t *testing.T) {
 	repo := &mockRepo{
 		listFn: func(_ context.Context, _ int32, _ int32, _ *string) ([]domain.AnalysisRequest, error) {
@@ -287,6 +306,9 @@ func TestList_RepoError(t *testing.T) {
 
 	if w.Code != http.StatusInternalServerError {
 		t.Errorf("want 500 Internal Server Error, got %d", w.Code)
+	}
+	if w.Body.String() == "" {
+		t.Error("want error message in body, got empty body")
 	}
 }
 

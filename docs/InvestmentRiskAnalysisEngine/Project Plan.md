@@ -22,10 +22,10 @@ The project is in active development on the `feature/7-ImplementAnalysisEndpoint
 
 ## In Progress
 
-- [ ] Fix `GET` / `List` route conflict (both mapped to `GET ""`)
-- [ ] Implement `Get` handler (fetch single analysis by ID from path param)
-- [ ] Implement `List` handler (with `limit`, `offset`, `status` query params)
-- [ ] Implement `Update` handler (status transition)
+- [x] Fix `GET` / `List` route conflict (both mapped to `GET ""`)
+- [x] Implement `Get` handler (fetch single analysis by ID from path param)
+- [x] Implement `List` handler (with `limit`, `offset`, `status` query params)
+- [x] Implement `Update` handler (status transition)
 
 ---
 
