@@ -1,0 +1,30 @@
+meta {
+  name: Update Analysis
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/analyses/{{analysisId}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "status": "completed"
+  }
+}
+
+docs {
+  Updates the status of an analysis request.
+
+  This endpoint is primarily used by the Risk Worker after it finishes
+  computing metrics, but can also be called manually for testing.
+
+  Valid status values:
+  - pending
+  - processing
+  - completed
+  - failed
+}

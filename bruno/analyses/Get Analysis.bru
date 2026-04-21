@@ -1,0 +1,23 @@
+meta {
+  name: Get Analysis
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/analyses/{{analysisId}}
+  body: none
+  auth: none
+}
+
+docs {
+  Fetches a single analysis request by its UUID.
+
+  Replace {{analysisId}} in the environment with the id returned by "Create Analysis".
+
+  Status values:
+  - pending     — queued, not yet picked up by the worker
+  - processing  — worker is computing metrics
+  - completed   — results are ready
+  - failed      — computation failed
+}
