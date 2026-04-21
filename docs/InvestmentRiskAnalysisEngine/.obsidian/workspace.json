@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Project Plan.md",
+                "file": "Risk Metrics.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Project Plan"
+              "title": "Risk Metrics"
             }
           }
         ]
@@ -94,7 +94,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Project Plan.md",
+                "file": "Risk Metrics.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +104,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for Project Plan"
+              "title": "Backlinks for Risk Metrics"
             }
           },
           {
@@ -113,12 +113,12 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Project Plan.md",
+                "file": "Risk Metrics.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "Outgoing links from Project Plan"
+              "title": "Outgoing links from Risk Metrics"
             }
           },
           {
@@ -156,13 +156,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Project Plan.md",
+                "file": "Risk Metrics.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of Project Plan"
+              "title": "Outline of Risk Metrics"
             }
           }
         ]
@@ -186,7 +186,10 @@
   },
   "active": "bc68477a6caa35c2",
   "lastOpenFiles": [
+    "Good Practices.md",
     "Infrastructure.md",
+    "Risk Metrics.md",
+    "Project Plan.md",
     "Development Guide.md",
     "Architecture.md",
     "Database Schema.md",
@@ -196,9 +199,7 @@
     "Excalidraw",
     "Untitled.md",
     "API Reference.md",
-    "Project Plan.md",
     "Home.md",
-    "Risk Metrics.md",
     "Welcome.md"
   ]
 }
