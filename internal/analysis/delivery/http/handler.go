@@ -40,3 +40,60 @@ func (h *AnalysisHandler) Create(c *gin.Context) {
 	// 202 Accepted is standard for asynchronous background jobs
 	c.JSON(http.StatusAccepted, result)
 }
+
+func (h *AnalysisHandler) Get(c *gin.Context) {
+	var req CreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	pID := uuid.MustParse(req.PortfolioID)
+
+	result, err := h.useCase.ExecuteCreate(c.Request.Context(), pID, req.Benchmark, req.Period)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to queue analysis"})
+		return
+	}
+
+	// 202 Accepted is standard for asynchronous background jobs
+	c.JSON(http.StatusAccepted, result)
+}
+
+func (h *AnalysisHandler) Update(c *gin.Context) {
+	var req CreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	pID := uuid.MustParse(req.PortfolioID)
+
+	result, err := h.useCase.ExecuteCreate(c.Request.Context(), pID, req.Benchmark, req.Period)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to queue analysis"})
+		return
+	}
+
+	// 202 Accepted is standard for asynchronous background jobs
+	c.JSON(http.StatusAccepted, result)
+}
+
+func (h *AnalysisHandler) List(c *gin.Context) {
+	var req CreateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	pID := uuid.MustParse(req.PortfolioID)
+
+	result, err := h.useCase.ExecuteCreate(c.Request.Context(), pID, req.Benchmark, req.Period)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to queue analysis"})
+		return
+	}
+
+	// 202 Accepted is standard for asynchronous background jobs
+	c.JSON(http.StatusAccepted, result)
+}
