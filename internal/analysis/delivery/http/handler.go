@@ -5,6 +5,7 @@ import (
 
 	"github.com/esuEdu/investment-risk-engine/internal/analysis/domain"
 	"github.com/esuEdu/investment-risk-engine/internal/analysis/usecase"
+	"github.com/esuEdu/investment-risk-engine/pkg/logger"
 	"github.com/esuEdu/investment-risk-engine/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -33,15 +34,25 @@ func (h *AnalysisHandler) Create(c *gin.Context) {
 		return
 	}
 
-	pID := uuid.MustParse(req.PortfolioID) // safe: binding:"uuid" already validated
+	pID := uuid.MustParse(req.PortfolioID)
 
 	result, err := h.useCase.ExecuteCreate(c.Request.Context(), pID, req.Benchmark, req.Period)
 	if err != nil {
+		logger.Log.Errorw("failed to create analysis",
+			"portfolio_id", req.PortfolioID,
+			"period", req.Period,
+			"error", err,
+		)
 		response.InternalError(c, "failed to queue analysis")
 		return
 	}
 
-	// 202 Accepted signals the job is queued, not yet completed.
+	logger.Log.Infow("analysis queued",
+		"analysis_id", result.ID,
+		"portfolio_id", req.PortfolioID,
+		"period", result.Period,
+	)
+
 	response.Accepted(c, "analysis queued successfully", result)
 }
 
@@ -86,6 +97,12 @@ func (h *AnalysisHandler) List(c *gin.Context) {
 
 	results, err := h.useCase.ExecuteList(c.Request.Context(), int32(limit), int32(offset), statusFilter)
 	if err != nil {
+		logger.Log.Errorw("failed to list analyses",
+			"limit", limit,
+			"offset", offset,
+			"status_filter", statusFilter,
+			"error", err,
+		)
 		response.InternalError(c, "failed to list analyses")
 		return
 	}
@@ -121,9 +138,19 @@ func (h *AnalysisHandler) Update(c *gin.Context) {
 	}
 
 	if err := h.useCase.ExecuteUpdate(c.Request.Context(), id, req.Status); err != nil {
+		logger.Log.Errorw("failed to update analysis status",
+			"analysis_id", id,
+			"status", req.Status,
+			"error", err,
+		)
 		response.InternalError(c, "failed to update analysis")
 		return
 	}
+
+	logger.Log.Infow("analysis status updated",
+		"analysis_id", id,
+		"status", req.Status,
+	)
 
 	response.OK(c, "analysis updated", gin.H{"id": id, "status": req.Status})
 }

@@ -7,15 +7,22 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
 	handler "github.com/esuEdu/investment-risk-engine/internal/analysis/delivery/http"
 	"github.com/esuEdu/investment-risk-engine/internal/analysis/domain"
 	"github.com/esuEdu/investment-risk-engine/internal/analysis/usecase"
+	"github.com/esuEdu/investment-risk-engine/pkg/logger"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
+
+func TestMain(m *testing.M) {
+	logger.Initialize("test")
+	os.Exit(m.Run())
+}
 
 type mockRepo struct {
 	createFn       func(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error)
