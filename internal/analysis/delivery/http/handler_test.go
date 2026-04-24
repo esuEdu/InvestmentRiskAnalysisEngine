@@ -56,10 +56,14 @@ func (m *mockRepo) List(ctx context.Context, limit, offset int32, status *string
 	return nil, nil
 }
 
+type mockQueue struct{}
+
+func (m *mockQueue) PublishAnalysisJob(_ *domain.AnalysisRequest) error { return nil }
+
 func newTestRouter(repo domain.Repository) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, &mockQueue{})
 	h := handler.New(uc)
 	r.POST("/api/v1/analyses", h.Create)
 	r.GET("/api/v1/analyses", h.List)
@@ -176,7 +180,7 @@ func TestCreate_NoBenchmark(t *testing.T) {
 func TestCreate_EmptyBody(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
-	uc := usecase.New(&mockRepo{})
+	uc := usecase.New(&mockRepo{}, &mockQueue{})
 	h := handler.New(uc)
 	r.POST("/api/v1/analyses", h.Create)
 

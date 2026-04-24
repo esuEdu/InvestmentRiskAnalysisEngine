@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Infrastructure.md",
+                "file": "API Reference.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Infrastructure"
+              "title": "API Reference"
             }
           }
         ]
@@ -186,14 +186,14 @@
   },
   "active": "bc68477a6caa35c2",
   "lastOpenFiles": [
-    "Project Plan.md",
-    "Infrastructure.md",
-    "Home.md",
-    "Development Guide.md",
-    "API Reference.md",
     "Architecture.md",
     "Database Schema.md",
+    "Development Guide.md",
+    "Home.md",
     "Risk Metrics.md",
+    "Project Plan.md",
+    "Infrastructure.md",
+    "API Reference.md",
     "Good Practices.md",
     "Excalidraw/Drawing 2026-04-21 10.30.09.excalidraw.md",
     "Untitled.base",
