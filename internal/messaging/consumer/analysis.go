@@ -9,11 +9,15 @@ import (
 
 const analysisJobQueue = "risk-analysis-jobs"
 
-type AnalysisConsumer struct {
-	con *Consumer
+type Receiver interface {
+	Consume(ctx context.Context, queue string, handler func([]byte) error) error
 }
 
-func NewAnalysisConsumer(con *Consumer) *AnalysisConsumer {
+type AnalysisConsumer struct {
+	con Receiver
+}
+
+func NewAnalysisConsumer(con Receiver) *AnalysisConsumer {
 	return &AnalysisConsumer{con: con}
 }
 

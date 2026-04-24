@@ -9,11 +9,15 @@ import (
 
 const analysisJobQueue = "risk-analysis-jobs"
 
-type AnalysisPublisher struct {
-	pub *Publisher
+type Sender interface {
+	Publish(ctx context.Context, queue string, body []byte) error
 }
 
-func NewAnalysisPublisher(pub *Publisher) *AnalysisPublisher {
+type AnalysisPublisher struct {
+	pub Sender
+}
+
+func NewAnalysisPublisher(pub Sender) *AnalysisPublisher {
 	return &AnalysisPublisher{pub: pub}
 }
 
