@@ -18,14 +18,16 @@ cd investment-risk-engine
 
 Copy and edit the environment config (via Viper / `.env` or env vars):
 
-| Variable | Description |
-|---|---|
-| `APP_ENV` | `development` / `production` |
-| `DB_HOST` | PostgreSQL host |
-| `DB_PORT` | PostgreSQL port (default `5432`) |
-| `DB_USER` | Database user |
-| `DB_PASSWORD` | Database password |
-| `DB_NAME` | Database name |
+| Variable      | Description                      |
+| ------------- | -------------------------------- |
+| `APP_ENV`     | `development` / `production`     |
+| `DB_HOST`     | PostgreSQL host                  |
+| `DB_PORT`     | PostgreSQL port (default `5432`) |
+| `DB_USER`     | Database user                    |
+| `DB_PASSWORD` | Database password                |
+| `DB_NAME`     | Database name                    |
+| `MQ_USER`     | RabbitMQ user                    |
+| `MQ_PASSWORD` | RabbitMQ password                |
 
 ### 2. Start infrastructure
 

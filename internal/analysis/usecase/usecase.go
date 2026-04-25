@@ -9,11 +9,12 @@ import (
 )
 
 type UseCase struct {
-	repo domain.Repository
+	repo  domain.Repository
+	queue domain.Queue
 }
 
-func New(r domain.Repository) *UseCase {
-	return &UseCase{repo: r}
+func New(r domain.Repository, q domain.Queue) *UseCase {
+	return &UseCase{repo: r, queue: q}
 }
 
 func (u *UseCase) ExecuteCreate(ctx context.Context, portfolioID uuid.UUID, benchmark *string, period string) (domain.AnalysisRequest, error) {
@@ -27,6 +28,10 @@ func (u *UseCase) ExecuteCreate(ctx context.Context, portfolioID uuid.UUID, benc
 
 	created, err := u.repo.Create(ctx, analysis)
 	if err != nil {
+		return domain.AnalysisRequest{}, err
+	}
+
+	if err := u.queue.PublishAnalysisJob(&created); err != nil {
 		return domain.AnalysisRequest{}, err
 	}
 

@@ -13,6 +13,10 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+	MQHost     string
+	MQPort     int
+	MQUser     string
+	MQPassword string
 }
 
 func Load() *Config {
@@ -35,5 +39,9 @@ func Load() *Config {
 		DBUser:     viper.GetString("DB_USER"),
 		DBPassword: viper.GetString("DB_PASSWORD"),
 		DBName:     viper.GetString("DB_NAME"),
+		MQHost:     viper.GetString("MQ_HOST"),
+		MQPort:     viper.GetInt("MQ_PORT"),
+		MQUser:     viper.GetString("MQ_USER"),
+		MQPassword: viper.GetString("MQ_PASSWORD"),
 	}
 }

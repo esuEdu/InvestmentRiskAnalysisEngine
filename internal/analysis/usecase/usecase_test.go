@@ -17,6 +17,19 @@ type mockRepo struct {
 	listFn         func(ctx context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error)
 }
 
+type mockQueue struct {
+	publishFn func(req *domain.AnalysisRequest) error
+}
+
+func (m *mockQueue) PublishAnalysisJob(req *domain.AnalysisRequest) error {
+	if m.publishFn != nil {
+		return m.publishFn(req)
+	}
+	return nil
+}
+
+func noopQueue() *mockQueue { return &mockQueue{} }
+
 func (m *mockRepo) Create(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error) {
 	return m.createFn(ctx, req)
 }
@@ -42,7 +55,7 @@ func TestExecuteCreate_Success(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	got, err := uc.ExecuteCreate(context.Background(), uuid.New(), &benchmark, period)
 
 	if err != nil {
@@ -66,7 +79,7 @@ func TestExecuteCreate_RepoError(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	_, err := uc.ExecuteCreate(context.Background(), uuid.New(), nil, "1y")
 
 	if err == nil {
@@ -74,8 +87,6 @@ func TestExecuteCreate_RepoError(t *testing.T) {
 	}
 }
 
-// WHY: nil benchmark is valid — the field is optional in the domain model.
-// Make sure we don't crash when it is absent.
 func TestExecuteCreate_NilBenchmark(t *testing.T) {
 	repo := &mockRepo{
 		createFn: func(_ context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error) {
@@ -83,7 +94,7 @@ func TestExecuteCreate_NilBenchmark(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	got, err := uc.ExecuteCreate(context.Background(), uuid.New(), nil, "3m")
 
 	if err != nil {
@@ -111,7 +122,7 @@ func TestExecuteGet_Success(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	got, err := uc.ExecuteGet(context.Background(), wantID)
 
 	if err != nil {
@@ -132,7 +143,7 @@ func TestExecuteGet_NotFound(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	_, err := uc.ExecuteGet(context.Background(), uuid.New())
 
 	if err == nil {
@@ -153,7 +164,7 @@ func TestExecuteUpdate_Success(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	err := uc.ExecuteUpdate(context.Background(), uuid.New(), domain.StatusCompleted)
 
 	if err != nil {
@@ -171,7 +182,7 @@ func TestExecuteUpdate_RepoError(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	err := uc.ExecuteUpdate(context.Background(), uuid.New(), domain.StatusFailed)
 
 	if err == nil {
@@ -194,7 +205,7 @@ func TestExecuteList_Success(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	got, err := uc.ExecuteList(context.Background(), 10, 0, nil)
 
 	if err != nil {
@@ -215,7 +226,7 @@ func TestExecuteList_NilStatusFilter(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	got, err := uc.ExecuteList(context.Background(), 5, 0, nil)
 
 	if err != nil {
@@ -233,7 +244,7 @@ func TestExecuteList_RepoError(t *testing.T) {
 		},
 	}
 
-	uc := usecase.New(repo)
+	uc := usecase.New(repo, noopQueue())
 	_, err := uc.ExecuteList(context.Background(), 10, 0, nil)
 
 	if err == nil {
