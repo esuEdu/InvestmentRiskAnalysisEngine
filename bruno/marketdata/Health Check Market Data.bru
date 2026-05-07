@@ -1,0 +1,15 @@
+meta {
+  name: Health Check Market Data
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{marketDataBaseUrl}}/api/v1/health
+  body: none
+  auth: none
+}
+
+docs {
+  Checks that the Market Data Service is running on port 8081.
+}
