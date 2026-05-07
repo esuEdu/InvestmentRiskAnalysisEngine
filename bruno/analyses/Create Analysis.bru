@@ -12,20 +12,27 @@ post {
 
 body:json {
   {
-    "portfolio_id": "{{portfolioId}}",
+    "assets": [
+      { "ticker": "AAPL", "weight": 0.40 },
+      { "ticker": "MSFT", "weight": 0.35 },
+      { "ticker": "GOOGL", "weight": 0.25 }
+    ],
     "benchmark": "SPY",
-    "period": "1y"
+    "period": "3m"
   }
 }
 
 docs {
   Creates a new analysis request and queues it for async processing.
-
+  
   Returns 202 Accepted — the job is queued, not yet completed.
-  Poll GET /analyses/:id to check when status changes to "completed".
-
+  Poll GET /analyses/:id until status changes to "completed", then call
+  GET /analyses/:id/results to retrieve the computed metrics.
+  
   Fields:
-  - portfolio_id (required) — UUID of the portfolio to analyse
-  - benchmark    (optional) — ticker to compare against, e.g. "SPY"
-  - period       (required) — time window: "1y", "6m", "3m"
+  - assets      (required) — array of portfolio assets, weights must sum to 1.0
+    - ticker    (required) — asset symbol, e.g. "AAPL"
+    - weight    (required) — allocation weight between 0 and 1
+  - benchmark   (optional) — ticker to compare against for Beta, e.g. "SPY"
+  - period      (required) — look-back window: "1m", "3m", "6m", "1y", "2y"
 }

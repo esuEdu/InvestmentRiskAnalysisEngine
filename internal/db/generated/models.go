@@ -16,3 +16,31 @@ type AnalysisRequest struct {
 	CreatedAt pgtype.Timestamp `json:"created_at"`
 	UpdatedAt pgtype.Timestamp `json:"updated_at"`
 }
+
+type AnalysisRequestAsset struct {
+	AnalysisRequestID pgtype.UUID    `json:"analysis_request_id"`
+	Ticker            string         `json:"ticker"`
+	Weight            pgtype.Numeric `json:"weight"`
+}
+
+type AnalysisResult struct {
+	AnalysisRequestID    pgtype.UUID      `json:"analysis_request_id"`
+	AnnualizedVolatility pgtype.Numeric   `json:"annualized_volatility"`
+	SharpeRatio          pgtype.Numeric   `json:"sharpe_ratio"`
+	Beta                 pgtype.Numeric   `json:"beta"`
+	MaxDrawdown          pgtype.Numeric   `json:"max_drawdown"`
+	Var95                pgtype.Numeric   `json:"var_95"`
+	ConcentrationScore   pgtype.Numeric   `json:"concentration_score"`
+	RawMetricsJson       []byte           `json:"raw_metrics_json"`
+	CreatedAt            pgtype.Timestamp `json:"created_at"`
+}
+
+type HistoricalPrice struct {
+	Ticker    string         `json:"ticker"`
+	PriceDate pgtype.Date    `json:"price_date"`
+	Open      pgtype.Numeric `json:"open"`
+	High      pgtype.Numeric `json:"high"`
+	Low       pgtype.Numeric `json:"low"`
+	Close     pgtype.Numeric `json:"close"`
+	Volume    *int64         `json:"volume"`
+}

@@ -13,8 +13,16 @@ import (
 type Querier interface {
 	CreateAnalysisRequest(ctx context.Context, arg CreateAnalysisRequestParams) (AnalysisRequest, error)
 	GetAnalysisRequest(ctx context.Context, id pgtype.UUID) (AnalysisRequest, error)
+	GetAnalysisRequestAssets(ctx context.Context, analysisRequestID pgtype.UUID) ([]GetAnalysisRequestAssetsRow, error)
+	GetAnalysisResult(ctx context.Context, analysisRequestID pgtype.UUID) (AnalysisResult, error)
+	GetHistoricalPrices(ctx context.Context, ticker string) ([]HistoricalPrice, error)
+	GetHistoricalPricesSince(ctx context.Context, arg GetHistoricalPricesSinceParams) ([]HistoricalPrice, error)
+	GetLatestPriceDate(ctx context.Context, ticker string) (pgtype.Date, error)
+	InsertAnalysisRequestAsset(ctx context.Context, arg InsertAnalysisRequestAssetParams) error
+	InsertAnalysisResult(ctx context.Context, arg InsertAnalysisResultParams) error
 	ListAnalysisRequests(ctx context.Context, arg ListAnalysisRequestsParams) ([]AnalysisRequest, error)
 	UpdateAnalysisRequestStatus(ctx context.Context, arg UpdateAnalysisRequestStatusParams) error
+	UpsertHistoricalPrice(ctx context.Context, arg UpsertHistoricalPriceParams) error
 }
 
 var _ Querier = (*Queries)(nil)

@@ -1,0 +1,29 @@
+meta {
+  name: Get Prices
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{marketDataBaseUrl}}/api/v1/prices?ticker={{ticker}}&period={{period}}
+  body: none
+  auth: none
+}
+
+params:query {
+  ticker: {{ticker}}
+  period: {{period}}
+}
+
+docs {
+  Fetches historical daily close prices for a ticker from the Market Data Service.
+
+  The service checks the local DB cache first. Only calls AlphaVantage when data
+  is stale (rate limit: 5 requests/min, 25 requests/day on the free plan).
+
+  Query params:
+  - ticker  (required) — asset symbol, e.g. "AAPL", "SPY", "MSFT"
+  - period  (required) — look-back window: "1m", "3m", "6m", "1y", "2y"
+
+  Response: array of PricePoint objects with date, open, high, low, close, volume.
+}

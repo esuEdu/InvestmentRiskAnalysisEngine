@@ -14,6 +14,7 @@ func (s *Server) setupRouter() {
 			analysis.GET("", s.analysisHandler.List)
 			analysis.GET("/:id", s.analysisHandler.Get)
 			analysis.PUT("/:id", s.analysisHandler.Update)
+			analysis.GET("/:id/results", s.analysisHandler.GetResult)
 		}
 	}
 }

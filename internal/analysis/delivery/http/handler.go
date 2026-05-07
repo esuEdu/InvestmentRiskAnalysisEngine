@@ -1,6 +1,7 @@
 package http
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/esuEdu/investment-risk-engine/internal/analysis/domain"
@@ -21,10 +22,15 @@ func New(u *usecase.UseCase) *AnalysisHandler {
 
 // ── POST /api/v1/analyses ─────────────────────────────────────────────────────
 
+type AssetRequest struct {
+	Ticker string  `json:"ticker" binding:"required"`
+	Weight float64 `json:"weight" binding:"required,gt=0,lte=1"`
+}
+
 type CreateRequest struct {
-	PortfolioID string  `json:"portfolio_id" binding:"required,uuid"`
-	Benchmark   *string `json:"benchmark"`
-	Period      string  `json:"period" binding:"required"` // e.g. "1y", "6m"
+	Assets    []AssetRequest `json:"assets"    binding:"required,min=1,dive"`
+	Benchmark *string        `json:"benchmark"`
+	Period    string         `json:"period"    binding:"required"`
 }
 
 func (h *AnalysisHandler) Create(c *gin.Context) {
@@ -34,25 +40,28 @@ func (h *AnalysisHandler) Create(c *gin.Context) {
 		return
 	}
 
-	pID := uuid.MustParse(req.PortfolioID)
+	var total float64
+	for _, a := range req.Assets {
+		total += a.Weight
+	}
+	if math.Abs(total-1.0) > 1e-4 {
+		response.BadRequest(c, "asset weights must sum to 1.0")
+		return
+	}
 
-	result, err := h.useCase.ExecuteCreate(c.Request.Context(), pID, req.Benchmark, req.Period)
+	assets := make([]domain.Asset, len(req.Assets))
+	for i, a := range req.Assets {
+		assets[i] = domain.Asset{Ticker: a.Ticker, Weight: a.Weight}
+	}
+
+	result, err := h.useCase.ExecuteCreate(c.Request.Context(), assets, req.Benchmark, req.Period)
 	if err != nil {
-		logger.Log.Errorw("failed to create analysis",
-			"portfolio_id", req.PortfolioID,
-			"period", req.Period,
-			"error", err,
-		)
+		logger.Log.Errorw("failed to create analysis", "period", req.Period, "error", err)
 		response.InternalError(c, "failed to queue analysis")
 		return
 	}
 
-	logger.Log.Infow("analysis queued",
-		"analysis_id", result.ID,
-		"portfolio_id", req.PortfolioID,
-		"period", result.Period,
-	)
-
+	logger.Log.Infow("analysis queued", "analysis_id", result.ID, "period", result.Period)
 	response.Accepted(c, "analysis queued successfully", result)
 }
 
@@ -97,12 +106,7 @@ func (h *AnalysisHandler) List(c *gin.Context) {
 
 	results, err := h.useCase.ExecuteList(c.Request.Context(), int32(limit), int32(offset), statusFilter)
 	if err != nil {
-		logger.Log.Errorw("failed to list analyses",
-			"limit", limit,
-			"offset", offset,
-			"status_filter", statusFilter,
-			"error", err,
-		)
+		logger.Log.Errorw("failed to list analyses", "limit", limit, "offset", offset, "error", err)
 		response.InternalError(c, "failed to list analyses")
 		return
 	}
@@ -138,19 +142,29 @@ func (h *AnalysisHandler) Update(c *gin.Context) {
 	}
 
 	if err := h.useCase.ExecuteUpdate(c.Request.Context(), id, req.Status); err != nil {
-		logger.Log.Errorw("failed to update analysis status",
-			"analysis_id", id,
-			"status", req.Status,
-			"error", err,
-		)
+		logger.Log.Errorw("failed to update analysis status", "analysis_id", id, "status", req.Status, "error", err)
 		response.InternalError(c, "failed to update analysis")
 		return
 	}
 
-	logger.Log.Infow("analysis status updated",
-		"analysis_id", id,
-		"status", req.Status,
-	)
-
+	logger.Log.Infow("analysis status updated", "analysis_id", id, "status", req.Status)
 	response.OK(c, "analysis updated", gin.H{"id": id, "status": req.Status})
+}
+
+// ── GET /api/v1/analyses/:id/results ─────────────────────────────────────────
+
+func (h *AnalysisHandler) GetResult(c *gin.Context) {
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		response.BadRequest(c, "invalid analysis id")
+		return
+	}
+
+	result, err := h.useCase.ExecuteGetResult(c.Request.Context(), id)
+	if err != nil {
+		response.NotFound(c, "results not found")
+		return
+	}
+
+	response.OK(c, "results retrieved", result)
 }

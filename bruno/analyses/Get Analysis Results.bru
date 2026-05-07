@@ -1,0 +1,26 @@
+meta {
+  name: Get Analysis Results
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/analyses/{{analysisId}}/results
+  body: none
+  auth: none
+}
+
+docs {
+  Returns the computed risk metrics for a completed analysis.
+
+  Returns 404 if the analysis is still pending or processing.
+  Set {{analysisId}} in the environment first.
+
+  Response fields:
+  - annualized_volatility — standard deviation of returns × √252
+  - sharpe_ratio          — risk-adjusted return (risk-free rate = 5%)
+  - beta                  — sensitivity vs benchmark; null if no benchmark given
+  - max_drawdown          — largest peak-to-trough loss (positive value, e.g. 0.21 = 21%)
+  - var_95                — worst expected daily loss at 95% confidence (negative, e.g. -0.03)
+  - concentration_score   — Herfindahl index Σ w_i² (0 = diversified, 1 = single asset)
+}

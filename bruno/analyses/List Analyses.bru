@@ -1,7 +1,7 @@
 meta {
   name: List Analyses
   type: http
-  seq: 3
+  seq: 4
 }
 
 get {
@@ -22,7 +22,7 @@ docs {
   Query params:
   - limit  (default 20) — number of results per page
   - offset (default 0)  — number of results to skip
-  - status (optional)   — filter by status: pending | processing | completed | failed
+  - status (optional)   — filter by: pending | processing | completed | failed
 
   The "status" param is disabled by default (~ prefix). Remove ~ to activate it.
 }

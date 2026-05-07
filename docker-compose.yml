@@ -19,3 +19,45 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
+
+  marketdata:
+    build:
+      context: .
+      dockerfile: deployments/docker/Dockerfile.marketdata
+    container_name: investment_risk_marketdata
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - APP_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=risk_engine
+      - MARKET_DATA_API_KEY=${MARKET_DATA_API_KEY}
+    depends_on:
+      - postgres
+
+  worker:
+    build:
+      context: .
+      dockerfile: deployments/docker/Dockerfile.worker
+    container_name: investment_risk_worker
+    restart: unless-stopped
+    environment:
+      - APP_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=risk_engine
+      - MQ_HOST=rabbitMQ
+      - MQ_PORT=5672
+      - MQ_USER=user
+      - MQ_PASSWORD=password
+      - MARKET_DATA_SERVICE_URL=http://marketdata:8081
+    depends_on:
+      - postgres
+      - rabbitMQ
+      - marketdata

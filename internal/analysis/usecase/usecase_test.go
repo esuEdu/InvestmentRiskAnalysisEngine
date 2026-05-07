@@ -11,10 +11,44 @@ import (
 )
 
 type mockRepo struct {
-	createFn       func(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error)
-	getFn          func(ctx context.Context, id uuid.UUID) (domain.AnalysisRequest, error)
-	updateStatusFn func(ctx context.Context, id uuid.UUID, status domain.Status) error
-	listFn         func(ctx context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error)
+	createFn             func(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error)
+	getFn                func(ctx context.Context, id uuid.UUID) (domain.AnalysisRequest, error)
+	updateStatusFn       func(ctx context.Context, id uuid.UUID, status domain.Status) error
+	listFn               func(ctx context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error)
+	getAssetsFn          func(ctx context.Context, id uuid.UUID) ([]domain.Asset, error)
+	getAnalysisResultFn  func(ctx context.Context, id uuid.UUID) (domain.AnalysisResult, error)
+	createResultFn       func(ctx context.Context, id uuid.UUID, result domain.AnalysisResult) error
+}
+
+func (m *mockRepo) Create(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error) {
+	return m.createFn(ctx, req)
+}
+func (m *mockRepo) Get(ctx context.Context, id uuid.UUID) (domain.AnalysisRequest, error) {
+	return m.getFn(ctx, id)
+}
+func (m *mockRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.Status) error {
+	return m.updateStatusFn(ctx, id, status)
+}
+func (m *mockRepo) List(ctx context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error) {
+	return m.listFn(ctx, limit, offset, status)
+}
+func (m *mockRepo) GetAssets(ctx context.Context, id uuid.UUID) ([]domain.Asset, error) {
+	if m.getAssetsFn != nil {
+		return m.getAssetsFn(ctx, id)
+	}
+	return []domain.Asset{}, nil
+}
+func (m *mockRepo) GetAnalysisResult(ctx context.Context, id uuid.UUID) (domain.AnalysisResult, error) {
+	if m.getAnalysisResultFn != nil {
+		return m.getAnalysisResultFn(ctx, id)
+	}
+	return domain.AnalysisResult{}, nil
+}
+func (m *mockRepo) CreateAnalysisResult(ctx context.Context, id uuid.UUID, result domain.AnalysisResult) error {
+	if m.createResultFn != nil {
+		return m.createResultFn(ctx, id, result)
+	}
+	return nil
 }
 
 type mockQueue struct {
@@ -30,18 +64,7 @@ func (m *mockQueue) PublishAnalysisJob(req *domain.AnalysisRequest) error {
 
 func noopQueue() *mockQueue { return &mockQueue{} }
 
-func (m *mockRepo) Create(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error) {
-	return m.createFn(ctx, req)
-}
-func (m *mockRepo) Get(ctx context.Context, id uuid.UUID) (domain.AnalysisRequest, error) {
-	return m.getFn(ctx, id)
-}
-func (m *mockRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.Status) error {
-	return m.updateStatusFn(ctx, id, status)
-}
-func (m *mockRepo) List(ctx context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error) {
-	return m.listFn(ctx, limit, offset, status)
-}
+var testAssets = []domain.Asset{{Ticker: "AAPL", Weight: 0.6}, {Ticker: "MSFT", Weight: 0.4}}
 
 func TestExecuteCreate_Success(t *testing.T) {
 	benchmark := "SPY"
@@ -56,7 +79,7 @@ func TestExecuteCreate_Success(t *testing.T) {
 	}
 
 	uc := usecase.New(repo, noopQueue())
-	got, err := uc.ExecuteCreate(context.Background(), uuid.New(), &benchmark, period)
+	got, err := uc.ExecuteCreate(context.Background(), testAssets, &benchmark, period)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -70,6 +93,9 @@ func TestExecuteCreate_Success(t *testing.T) {
 	if got.Benchmark == nil || *got.Benchmark != benchmark {
 		t.Errorf("want benchmark %q, got %v", benchmark, got.Benchmark)
 	}
+	if len(got.Assets) != len(testAssets) {
+		t.Errorf("want %d assets, got %d", len(testAssets), len(got.Assets))
+	}
 }
 
 func TestExecuteCreate_RepoError(t *testing.T) {
@@ -80,7 +106,7 @@ func TestExecuteCreate_RepoError(t *testing.T) {
 	}
 
 	uc := usecase.New(repo, noopQueue())
-	_, err := uc.ExecuteCreate(context.Background(), uuid.New(), nil, "1y")
+	_, err := uc.ExecuteCreate(context.Background(), testAssets, nil, "1y")
 
 	if err == nil {
 		t.Fatal("expected an error but got nil")
@@ -95,7 +121,7 @@ func TestExecuteCreate_NilBenchmark(t *testing.T) {
 	}
 
 	uc := usecase.New(repo, noopQueue())
-	got, err := uc.ExecuteCreate(context.Background(), uuid.New(), nil, "3m")
+	got, err := uc.ExecuteCreate(context.Background(), testAssets, nil, "3m")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -107,11 +133,7 @@ func TestExecuteCreate_NilBenchmark(t *testing.T) {
 
 func TestExecuteGet_Success(t *testing.T) {
 	wantID := uuid.New()
-	want := domain.AnalysisRequest{
-		ID:     wantID,
-		Status: domain.StatusCompleted,
-		Period: "6m",
-	}
+	want := domain.AnalysisRequest{ID: wantID, Status: domain.StatusCompleted, Period: "6m"}
 
 	repo := &mockRepo{
 		getFn: func(_ context.Context, id uuid.UUID) (domain.AnalysisRequest, error) {
@@ -171,7 +193,7 @@ func TestExecuteUpdate_Success(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if !called {
-		t.Fatal("UpdateStatus was never called — the use case did not reach the repository")
+		t.Fatal("UpdateStatus was never called")
 	}
 }
 
