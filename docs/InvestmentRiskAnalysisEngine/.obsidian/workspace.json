@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "API Reference.md",
+                "file": "Architecture.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "API Reference"
+              "title": "Architecture"
             }
           }
         ]
@@ -186,16 +186,31 @@
   },
   "active": "bc68477a6caa35c2",
   "lastOpenFiles": [
-    "Architecture.md",
-    "Database Schema.md",
-    "Development Guide.md",
-    "Home.md",
+    "Excalidraw/Drawing 2026-04-21 10.30.09.excalidraw.md",
     "Risk Metrics.md",
     "Project Plan.md",
     "Infrastructure.md",
+    "Home.md",
+    "Development Guide.md",
+    "Services/API Service/Plan.md",
+    "Services/API Service/API Reference.md",
+    "Services/Worker Service/Plan.md",
+    "Services/Worker Service/Implementation Plan.md",
+    "Services/Portfolio Service/Plan.md",
+    "Services/Market Data Service/Plan.md",
+    "Services/Market Data Service/Market Data Service.md",
+    "Implementation Plan - Worker Service.md",
+    "Services/Worker Service/Worker Service.md",
+    "Services/Worker Service",
+    "Services/Portfolio Service",
+    "Services/Market Data Service",
+    "Services/API Service",
+    "Services",
+    "Database Schema.md",
+    "Architecture.md",
     "API Reference.md",
+    "Worker Service.md",
     "Good Practices.md",
-    "Excalidraw/Drawing 2026-04-21 10.30.09.excalidraw.md",
     "Untitled.base",
     "Untitled.canvas",
     "Excalidraw",

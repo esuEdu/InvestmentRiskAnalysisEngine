@@ -1,6 +1,6 @@
 ## Current Status
 
-The project is in active development on the `feature/7-ImplementAnalysisEndpoint` branch.
+Phase 3 (Risk Worker) complete. Now working on Phase 4 — Portfolio Service.
 
 ---
 
@@ -17,41 +17,23 @@ The project is in active development on the `feature/7-ImplementAnalysisEndpoint
 - [x] Gin router setup with `/api/v1` group
 - [x] Structured logging with Uber Zap
 - [x] Viper-based config loading
+- [x] Fix `GET` / `List` route conflict
+- [x] Implement `Get`, `List`, `Update` handlers
+- [x] RabbitMQ connection and publisher (`internal/messaging`)
+- [x] Publish job to `risk-analysis-jobs` on analysis creation
+- [x] RabbitMQ consumer layer (`internal/messaging/consumer`)
+- [x] DB migrations — `analysis_request_assets`, `analysis_results`, `historical_prices`
+- [x] `internal/riskmetrics` — volatility, Sharpe, beta, drawdown, VaR, HHI calculator
+- [x] `internal/marketdata` — AlphaVantage adapter, use case, repository, HTTP handler
+- [x] `cmd/marketdata/main.go` — Market Data Service entrypoint (`:8081`)
+- [x] `internal/worker` — `Handle` orchestration (fetch prices → compute → persist)
+- [x] `cmd/worker/main.go` — Worker Service entrypoint with graceful shutdown
+- [x] `GET /api/v1/analyses/:id/results` — results endpoint on API Service
+- [x] API updated to accept multi-asset requests with portfolio weights
+- [x] Config — `MarketDataServiceURL`, `MarketDataAPIKey`
+- [x] Docker Compose — `worker` and `marketdata` services
 
----
-
-## In Progress
-
-- [x] Fix `GET` / `List` route conflict (both mapped to `GET ""`)
-- [x] Implement `Get` handler (fetch single analysis by ID from path param)
-- [x] Implement `List` handler (with `limit`, `offset`, `status` query params)
-- [x] Implement `Update` handler (status transition)
-
----
-
-## Backlog
-
-### Phase 2 — Messaging
-
-- [ ] RabbitMQ connection and publisher
-- [ ] Publish job to `risk-analysis-jobs` on analysis creation
-- [ ] Dead-letter queue configuration
-
-### Phase 3 — Risk Worker
-
-- [ ] Worker service entrypoint (`cmd/worker`)
-- [ ] RabbitMQ consumer
-- [ ] Market data client (AlphaVantage / TwelveData / Polygon)
-- [ ] Historical price storage (`historical_prices` table)
-- [ ] Risk metric calculators:
-  - [ ] Annualized volatility
-  - [ ] Sharpe ratio
-  - [ ] Beta
-  - [ ] Maximum drawdown
-  - [ ] Historical VaR (95%)
-  - [ ] Concentration score (HHI)
-- [ ] Persist results to `analysis_results`
-- [ ] Update `analysis_requests.status` → `completed` / `failed`
+> See [[Worker Service]] for implementation details.
 
 ### Phase 4 — Portfolio Service
 
@@ -90,3 +72,4 @@ The project is in active development on the `feature/7-ImplementAnalysisEndpoint
 - [[Architecture]]
 - [[Risk Metrics]]
 - [[API Reference]]
+- [[Worker Service]]
