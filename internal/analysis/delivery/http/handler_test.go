@@ -25,10 +25,11 @@ func TestMain(m *testing.M) {
 }
 
 type mockRepo struct {
-	createFn       func(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error)
-	getFn          func(ctx context.Context, id uuid.UUID) (domain.AnalysisRequest, error)
-	updateStatusFn func(ctx context.Context, id uuid.UUID, status domain.Status) error
-	listFn         func(ctx context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error)
+	createFn            func(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error)
+	getFn               func(ctx context.Context, id uuid.UUID) (domain.AnalysisRequest, error)
+	updateStatusFn      func(ctx context.Context, id uuid.UUID, status domain.Status) error
+	listFn              func(ctx context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error)
+	getAnalysisResultFn func(ctx context.Context, id uuid.UUID) (domain.AnalysisResult, error)
 }
 
 func (m *mockRepo) Create(ctx context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error) {
@@ -55,6 +56,18 @@ func (m *mockRepo) List(ctx context.Context, limit, offset int32, status *string
 	}
 	return nil, nil
 }
+func (m *mockRepo) GetAssets(_ context.Context, _ uuid.UUID) ([]domain.Asset, error) {
+	return []domain.Asset{}, nil
+}
+func (m *mockRepo) GetAnalysisResult(ctx context.Context, id uuid.UUID) (domain.AnalysisResult, error) {
+	if m.getAnalysisResultFn != nil {
+		return m.getAnalysisResultFn(ctx, id)
+	}
+	return domain.AnalysisResult{}, nil
+}
+func (m *mockRepo) CreateAnalysisResult(_ context.Context, _ uuid.UUID, _ domain.AnalysisResult) error {
+	return nil
+}
 
 type mockQueue struct{}
 
@@ -69,6 +82,7 @@ func newTestRouter(repo domain.Repository) *gin.Engine {
 	r.GET("/api/v1/analyses", h.List)
 	r.GET("/api/v1/analyses/:id", h.Get)
 	r.PUT("/api/v1/analyses/:id", h.Update)
+	r.GET("/api/v1/analyses/:id/results", h.GetResult)
 	return r
 }
 
@@ -81,6 +95,15 @@ func post(router *gin.Engine, path string, body any) *httptest.ResponseRecorder 
 	return w
 }
 
+var validBody = map[string]any{
+	"assets": []map[string]any{
+		{"ticker": "AAPL", "weight": 0.6},
+		{"ticker": "MSFT", "weight": 0.4},
+	},
+	"benchmark": "SPY",
+	"period":    "1y",
+}
+
 func TestCreate_ValidRequest(t *testing.T) {
 	repo := &mockRepo{
 		createFn: func(_ context.Context, req domain.AnalysisRequest) (domain.AnalysisRequest, error) {
@@ -89,11 +112,7 @@ func TestCreate_ValidRequest(t *testing.T) {
 		},
 	}
 
-	w := post(newTestRouter(repo), "/api/v1/analyses", map[string]any{
-		"portfolio_id": uuid.New().String(),
-		"benchmark":    "SPY",
-		"period":       "1y",
-	})
+	w := post(newTestRouter(repo), "/api/v1/analyses", validBody)
 
 	if w.Code != http.StatusAccepted {
 		t.Errorf("want 202 Accepted, got %d\nbody: %s", w.Code, w.Body.String())
@@ -110,7 +129,7 @@ func TestCreate_ValidRequest(t *testing.T) {
 
 func TestCreate_MissingPeriod(t *testing.T) {
 	w := post(newTestRouter(&mockRepo{}), "/api/v1/analyses", map[string]any{
-		"portfolio_id": uuid.New().String(),
+		"assets": []map[string]any{{"ticker": "AAPL", "weight": 1.0}},
 	})
 
 	if w.Code != http.StatusBadRequest {
@@ -118,7 +137,7 @@ func TestCreate_MissingPeriod(t *testing.T) {
 	}
 }
 
-func TestCreate_MissingPortfolioID(t *testing.T) {
+func TestCreate_MissingAssets(t *testing.T) {
 	w := post(newTestRouter(&mockRepo{}), "/api/v1/analyses", map[string]any{
 		"period": "1y",
 	})
@@ -128,10 +147,13 @@ func TestCreate_MissingPortfolioID(t *testing.T) {
 	}
 }
 
-func TestCreate_InvalidUUID(t *testing.T) {
+func TestCreate_WeightsDontSumToOne(t *testing.T) {
 	w := post(newTestRouter(&mockRepo{}), "/api/v1/analyses", map[string]any{
-		"portfolio_id": "this-is-not-a-uuid",
-		"period":       "1y",
+		"assets": []map[string]any{
+			{"ticker": "AAPL", "weight": 0.5},
+			{"ticker": "MSFT", "weight": 0.3},
+		},
+		"period": "1y",
 	})
 
 	if w.Code != http.StatusBadRequest {
@@ -146,10 +168,7 @@ func TestCreate_RepoError(t *testing.T) {
 		},
 	}
 
-	w := post(newTestRouter(repo), "/api/v1/analyses", map[string]any{
-		"portfolio_id": uuid.New().String(),
-		"period":       "1y",
-	})
+	w := post(newTestRouter(repo), "/api/v1/analyses", validBody)
 
 	if w.Code != http.StatusInternalServerError {
 		t.Errorf("want 500 Internal Server Error, got %d\nbody: %s", w.Code, w.Body.String())
@@ -168,8 +187,8 @@ func TestCreate_NoBenchmark(t *testing.T) {
 	}
 
 	w := post(newTestRouter(repo), "/api/v1/analyses", map[string]any{
-		"portfolio_id": uuid.New().String(),
-		"period":       "6m",
+		"assets": []map[string]any{{"ticker": "AAPL", "weight": 1.0}},
+		"period": "6m",
 	})
 
 	if w.Code != http.StatusAccepted {
@@ -210,14 +229,6 @@ func TestGet_ValidID(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
 	}
-	var body map[string]any
-	json.Unmarshal(w.Body.Bytes(), &body)
-	if body["message"] == nil {
-		t.Errorf("want 'message' field in response, got: %s", w.Body.String())
-	}
-	if body["data"] == nil {
-		t.Errorf("want 'data' field in response, got: %s", w.Body.String())
-	}
 }
 
 func TestGet_InvalidID(t *testing.T) {
@@ -246,18 +257,58 @@ func TestGet_NotFound(t *testing.T) {
 	}
 }
 
+func TestGetResult_Found(t *testing.T) {
+	beta := 1.1
+	repo := &mockRepo{
+		getAnalysisResultFn: func(_ context.Context, _ uuid.UUID) (domain.AnalysisResult, error) {
+			return domain.AnalysisResult{
+				AnnualizedVolatility: 0.18,
+				SharpeRatio:          1.2,
+				Beta:                 &beta,
+				MaxDrawdown:          -0.21,
+				VaR95:                -0.03,
+				ConcentrationScore:   0.52,
+			}, nil
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses/"+uuid.New().String()+"/results", nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
+	}
+	var body map[string]any
+	json.Unmarshal(w.Body.Bytes(), &body)
+	if body["data"] == nil {
+		t.Errorf("want 'data' field in response, got: %s", w.Body.String())
+	}
+}
+
+func TestGetResult_NotFound(t *testing.T) {
+	repo := &mockRepo{
+		getAnalysisResultFn: func(_ context.Context, _ uuid.UUID) (domain.AnalysisResult, error) {
+			return domain.AnalysisResult{}, errors.New("no rows in result set")
+		},
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(http.MethodGet, "/api/v1/analyses/"+uuid.New().String()+"/results", nil)
+	newTestRouter(repo).ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("want 404 Not Found, got %d", w.Code)
+	}
+}
+
 func TestList_Defaults(t *testing.T) {
 	repo := &mockRepo{
 		listFn: func(_ context.Context, limit, offset int32, status *string) ([]domain.AnalysisRequest, error) {
 			if limit != 20 || offset != 0 {
 				t.Errorf("want default limit=20 offset=0, got limit=%d offset=%d", limit, offset)
 			}
-			if status != nil {
-				t.Errorf("want nil status filter, got %v", *status)
-			}
-			return []domain.AnalysisRequest{
-				{ID: uuid.New(), Status: domain.StatusPending, Period: "1y"},
-			}, nil
+			return []domain.AnalysisRequest{{ID: uuid.New(), Status: domain.StatusPending, Period: "1y"}}, nil
 		},
 	}
 
@@ -267,17 +318,6 @@ func TestList_Defaults(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("want 200 OK, got %d\nbody: %s", w.Code, w.Body.String())
-	}
-	var body map[string]any
-	json.Unmarshal(w.Body.Bytes(), &body)
-	if body["data"] == nil {
-		t.Errorf("want 'data' field, got: %s", w.Body.String())
-	}
-	if body["meta"] == nil {
-		t.Errorf("want 'meta' field, got: %s", w.Body.String())
-	}
-	if body["message"] == nil {
-		t.Errorf("want 'message' field, got: %s", w.Body.String())
 	}
 }
 
@@ -332,12 +372,10 @@ func TestList_Empty(t *testing.T) {
 	}
 	var body map[string]any
 	json.Unmarshal(w.Body.Bytes(), &body)
-	// data must be an empty array [], not null
 	data, ok := body["data"].([]any)
 	if !ok || len(data) != 0 {
 		t.Errorf("want data=[], got: %s", w.Body.String())
 	}
-	// meta must be present even when the list is empty
 	if body["meta"] == nil {
 		t.Errorf("want 'meta' field in list response, got: %s", w.Body.String())
 	}

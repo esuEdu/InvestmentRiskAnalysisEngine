@@ -41,7 +41,7 @@ func main() {
 
 	queries := sqlc.New(pool)
 
-	repo := repository.New(queries)
+	repo := repository.New(queries, pool)
 	uc := usecase.New(repo, analysisPublisher)
 	handler := analysesHandler.New(uc)
 

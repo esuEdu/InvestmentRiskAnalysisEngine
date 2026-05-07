@@ -17,6 +17,9 @@ type Config struct {
 	MQPort     int
 	MQUser     string
 	MQPassword string
+
+	MarketDataServiceURL string
+	MarketDataAPIKey     string
 }
 
 func Load() *Config {
@@ -43,5 +46,8 @@ func Load() *Config {
 		MQPort:     viper.GetInt("MQ_PORT"),
 		MQUser:     viper.GetString("MQ_USER"),
 		MQPassword: viper.GetString("MQ_PASSWORD"),
+
+		MarketDataServiceURL: viper.GetString("MARKET_DATA_SERVICE_URL"),
+		MarketDataAPIKey:     viper.GetString("MARKET_DATA_API_KEY"),
 	}
 }

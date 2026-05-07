@@ -17,9 +17,10 @@ func New(r domain.Repository, q domain.Queue) *UseCase {
 	return &UseCase{repo: r, queue: q}
 }
 
-func (u *UseCase) ExecuteCreate(ctx context.Context, portfolioID uuid.UUID, benchmark *string, period string) (domain.AnalysisRequest, error) {
+func (u *UseCase) ExecuteCreate(ctx context.Context, assets []domain.Asset, benchmark *string, period string) (domain.AnalysisRequest, error) {
 	analysis := domain.AnalysisRequest{
 		ID:        uuid.New(),
+		Assets:    assets,
 		Benchmark: benchmark,
 		Period:    period,
 		Status:    domain.StatusPending,
@@ -38,28 +39,18 @@ func (u *UseCase) ExecuteCreate(ctx context.Context, portfolioID uuid.UUID, benc
 	return created, nil
 }
 
-func (u *UseCase) ExecuteGet(ctx context.Context, AnalysisID uuid.UUID) (domain.AnalysisRequest, error) {
-	analysis, err := u.repo.Get(ctx, AnalysisID)
-	if err != nil {
-		return domain.AnalysisRequest{}, err
-	}
-
-	return analysis, err
+func (u *UseCase) ExecuteGet(ctx context.Context, id uuid.UUID) (domain.AnalysisRequest, error) {
+	return u.repo.Get(ctx, id)
 }
 
-func (u *UseCase) ExecuteUpdate(ctx context.Context, AnalysisID uuid.UUID, status domain.Status) error {
-	if err := u.repo.UpdateStatus(ctx, AnalysisID, status); err != nil {
-		return err
-	}
-
-	return nil
+func (u *UseCase) ExecuteUpdate(ctx context.Context, id uuid.UUID, status domain.Status) error {
+	return u.repo.UpdateStatus(ctx, id, status)
 }
 
 func (u *UseCase) ExecuteList(ctx context.Context, limit, offset int32, status *domain.Status) ([]domain.AnalysisRequest, error) {
-	listed, err := u.repo.List(ctx, limit, offset, (*string)(status))
-	if err != nil {
-		return nil, err
-	}
+	return u.repo.List(ctx, limit, offset, (*string)(status))
+}
 
-	return listed, nil
+func (u *UseCase) ExecuteGetResult(ctx context.Context, id uuid.UUID) (domain.AnalysisResult, error) {
+	return u.repo.GetAnalysisResult(ctx, id)
 }
