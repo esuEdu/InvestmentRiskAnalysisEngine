@@ -39,6 +39,26 @@ services:
     depends_on:
       - postgres
 
+  portfolio:
+    build:
+      context: .
+      dockerfile: deployments/docker/Dockerfile.portfolio
+    container_name: investment_risk_portfolio
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - APP_ENV=development
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=risk_engine
+      - JWT_SECRET=${JWT_SECRET}
+      - API_SERVICE_URL=http://api:8080
+    depends_on:
+      - postgres
+
   worker:
     build:
       context: .

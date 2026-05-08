@@ -1,0 +1,19 @@
+meta {
+  name: Delete Portfolio
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{portfolioBaseUrl}}/api/v1/portfolios/{{portfolioId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Delete a portfolio and all its assets (cascade).
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Get Portfolio
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{portfolioBaseUrl}}/api/v1/portfolios/{{portfolioId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  Fetch a single portfolio by ID.
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Update Portfolio
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{portfolioBaseUrl}}/api/v1/portfolios/{{portfolioId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Updated Tech Portfolio",
+    "assets": [
+      { "ticker": "AAPL", "weight": 0.50 },
+      { "ticker": "MSFT", "weight": 0.30 },
+      { "ticker": "GOOGL", "weight": 0.20 }
+    ]
+  }
+}
+
+docs {
+  Update portfolio name and asset weights. Weights must still sum to 1.0.
+}

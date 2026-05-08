@@ -1,0 +1,37 @@
+meta {
+  name: Create Portfolio
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{portfolioBaseUrl}}/api/v1/portfolios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "My Tech Portfolio",
+    "assets": [
+      { "ticker": "AAPL", "weight": 0.40 },
+      { "ticker": "MSFT", "weight": 0.35 },
+      { "ticker": "GOOGL", "weight": 0.25 }
+    ]
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setVar("portfolioId", res.body.data.ID);
+  }
+}
+
+docs {
+  Create a portfolio. Asset weights must sum to 1.0.
+  Stores the returned portfolio ID in `portfolioId`.
+}

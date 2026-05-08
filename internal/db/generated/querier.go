@@ -12,16 +12,27 @@ import (
 
 type Querier interface {
 	CreateAnalysisRequest(ctx context.Context, arg CreateAnalysisRequestParams) (AnalysisRequest, error)
+	CreatePortfolio(ctx context.Context, arg CreatePortfolioParams) (Portfolio, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeletePortfolio(ctx context.Context, id pgtype.UUID) error
+	DeletePortfolioAssets(ctx context.Context, portfolioID pgtype.UUID) error
 	GetAnalysisRequest(ctx context.Context, id pgtype.UUID) (AnalysisRequest, error)
 	GetAnalysisRequestAssets(ctx context.Context, analysisRequestID pgtype.UUID) ([]GetAnalysisRequestAssetsRow, error)
 	GetAnalysisResult(ctx context.Context, analysisRequestID pgtype.UUID) (AnalysisResult, error)
 	GetHistoricalPrices(ctx context.Context, ticker string) ([]HistoricalPrice, error)
 	GetHistoricalPricesSince(ctx context.Context, arg GetHistoricalPricesSinceParams) ([]HistoricalPrice, error)
 	GetLatestPriceDate(ctx context.Context, ticker string) (pgtype.Date, error)
+	GetPortfolio(ctx context.Context, id pgtype.UUID) (Portfolio, error)
+	GetPortfolioAssets(ctx context.Context, portfolioID pgtype.UUID) ([]PortfolioAsset, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
+	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	InsertAnalysisRequestAsset(ctx context.Context, arg InsertAnalysisRequestAssetParams) error
 	InsertAnalysisResult(ctx context.Context, arg InsertAnalysisResultParams) error
+	InsertPortfolioAsset(ctx context.Context, arg InsertPortfolioAssetParams) error
 	ListAnalysisRequests(ctx context.Context, arg ListAnalysisRequestsParams) ([]AnalysisRequest, error)
+	ListPortfoliosByUser(ctx context.Context, userID pgtype.UUID) ([]Portfolio, error)
 	UpdateAnalysisRequestStatus(ctx context.Context, arg UpdateAnalysisRequestStatusParams) error
+	UpdatePortfolioName(ctx context.Context, arg UpdatePortfolioNameParams) (Portfolio, error)
 	UpsertHistoricalPrice(ctx context.Context, arg UpsertHistoricalPriceParams) error
 }
 

@@ -44,3 +44,24 @@ type HistoricalPrice struct {
 	Close     pgtype.Numeric `json:"close"`
 	Volume    *int64         `json:"volume"`
 }
+
+type Portfolio struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Name      string             `json:"name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type PortfolioAsset struct {
+	PortfolioID pgtype.UUID    `json:"portfolio_id"`
+	Ticker      string         `json:"ticker"`
+	Weight      pgtype.Numeric `json:"weight"`
+}
+
+type User struct {
+	ID           pgtype.UUID        `json:"id"`
+	Email        string             `json:"email"`
+	PasswordHash string             `json:"password_hash"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}

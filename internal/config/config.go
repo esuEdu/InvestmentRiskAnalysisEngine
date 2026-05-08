@@ -20,19 +20,17 @@ type Config struct {
 
 	MarketDataServiceURL string
 	MarketDataAPIKey     string
+
+	JWTSecret     string
+	APIServiceURL string
 }
 
 func Load() *Config {
+	viper.AutomaticEnv()
+
 	viper.SetConfigFile(".env")
-
-	viper.AddConfigPath(".")
-
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-			log.Println("No .env file found, using environment variables or defaults")
-		} else {
-			log.Fatalf("Fatal error reading config file: %s \n", err)
-		}
+		log.Println("No .env file found, using environment variables")
 	}
 
 	return &Config{
@@ -49,5 +47,8 @@ func Load() *Config {
 
 		MarketDataServiceURL: viper.GetString("MARKET_DATA_SERVICE_URL"),
 		MarketDataAPIKey:     viper.GetString("MARKET_DATA_API_KEY"),
+
+		JWTSecret:     viper.GetString("JWT_SECRET"),
+		APIServiceURL: viper.GetString("API_SERVICE_URL"),
 	}
 }

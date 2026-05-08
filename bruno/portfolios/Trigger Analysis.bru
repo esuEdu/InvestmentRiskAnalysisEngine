@@ -1,0 +1,27 @@
+meta {
+  name: Trigger Analysis
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{portfolioBaseUrl}}/api/v1/portfolios/{{portfolioId}}/analyses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "benchmark": "SPY",
+    "period": "1y"
+  }
+}
+
+docs {
+  Trigger a risk analysis for this portfolio. Calls the API Service internally
+  and queues the job. Poll GET /analyses/:id on the API Service for results.
+}
