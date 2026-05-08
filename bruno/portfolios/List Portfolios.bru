@@ -1,0 +1,19 @@
+meta {
+  name: List Portfolios
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{portfolioBaseUrl}}/api/v1/portfolios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  List all portfolios belonging to the authenticated user.
+}
